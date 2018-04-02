@@ -1,0 +1,15 @@
+{
+  "name": "scanner_tf",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@tensorflow/tfjs": "^0.6.1",
+    "technicalindicators": "^1.1.8"
+  }
+}
