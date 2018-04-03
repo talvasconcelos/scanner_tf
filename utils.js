@@ -19,23 +19,37 @@ const indicators = (data, period, wl) => {
   let MFI = tech.MFI.calculate({high, low, close, volume, period}).map(v => normalizeValues(v, 0, 100))
   let RSI = tech.RSI.calculate({values: close, period}).map(v => normalizeValues(v, 0, 100))
   let price_change = close.map((cur, i) => {
-    let j = i - wl
-    if(i > wl){
-      let c = (close[i] - close[j]) / close[i]
-      return normalizeValues(c, -1, 1)
-    }
+    return normalizeValues((close[i] - close[i - (wl + 1)]) / close[i], -1, 1)
+    // let j = i - (wl + 1)
+    // if(i > wl) {
+    //   let c = close[i] / close[j]
+    //   return normalizeValues(c, -1, 1)
+    // }
+    // return 0
   })
-  console.log({price_change});
-  return {price_change, MFI, RSI}
+  let output = close.map((cur, i) => {
+    if(i < close.length - (wl + 1)){
+      return outputClass(close.slice(i + 1, i + wl + 1), close[i], 1.056)
+    }
+    return [0, 0, 0]
+  })
+
+  let sliced = Math.min(MFI.length, RSI.length, price_change.length, output.length)
+  MFI = MFI.slice(-sliced)
+  RSI = RSI.slice(-sliced)
+  price_change = price_change.slice(-sliced)
+  output = output.slice(-sliced)
+  return {price_change, MFI, RSI, output}
 }
 
-const output = (data, last_price, pct) => {
-    let max = Math.max(data)
-    let up = max >= last_price * pct
+const outputClass = (data, last_price, pct) => {
+    let max = Math.max(...data)
+    let up = max >= (last_price * pct)
     return up ? 1 : 0
-  }
+}
+
 
 module.exports = {
   indicators,
-  output
+  outputClass
 }
