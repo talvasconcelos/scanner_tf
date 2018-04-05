@@ -31,7 +31,7 @@ const indicators = (data, period, wl) => {
     if(i < close.length - (wl + 1)){
       return outputClass(close.slice(i + 1, i + wl + 1), close[i], 1.056)
     }
-    return [0, 0, 0]
+    return 0
   })
 
   let sliced = Math.min(MFI.length, RSI.length, price_change.length, output.length)
