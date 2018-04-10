@@ -9,7 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@tensorflow/tfjs": "^0.7.0",
+    "@tensorflow/tfjs": "^0.8.0",
     "technicalindicators": "^1.1.8"
   }
 }

@@ -1,7 +1,7 @@
 const tf = require('@tensorflow/tfjs')
 const utils = require('./utils')
 const fs = require('fs')
-let data = require('./inputs/VENBTC.json')
+let data = require('./inputs/ETHBTC.json')
 let test = require('./inputs/BNBBTC.json')
 
 let WINDOW_LEN = 4
@@ -19,15 +19,16 @@ function create_dataSet(data, ip = INDICATOR_PERIOD, wl = WINDOW_LEN) {
     if(i > wl){
       let _MFI = ind.MFI.slice(j, i)//.map(v => v)
       let _RSI = ind.RSI.slice(j, i)//.map(v => v)
+      let _VOL = ind.VOL.slice(j, i)//.map(v => v)
       let price = ind.price_change.slice(j, i)
       X.push([
-        price[0], _MFI[0], _RSI[0],
-        price[1], _MFI[1], _RSI[1],
-        price[2], _MFI[2], _RSI[2],
-        price[3], _MFI[3], _RSI[3]])
+        price[0], _MFI[0], _RSI[0], _VOL[0],
+        price[1], _MFI[1], _RSI[1], _VOL[1],
+        price[2], _MFI[2], _RSI[2], _VOL[2],
+        price[3], _MFI[3], _RSI[3], _VOL[3]])
       Y.push(tf.tensor([ind.output[i]]))
       // set.push([
-      //   price[0], _MFI[0], _RSI[0], price[1], _MFI[1], _RSI[1], price[2], _MFI[2], _RSI[2], price[3], _MFI[3], _RSI[3], ind.output[i]
+      //   price[0], _MFI[0], _RSI[0], _VOL[0], price[1], _MFI[1], _RSI[1], _VOL[1], price[2], _MFI[2], _RSI[2], _VOL[2], price[3], _MFI[3], _RSI[3], _VOL[3], ind.output[i]
       // ])
     }
   })
@@ -39,8 +40,8 @@ function create_dataSet(data, ip = INDICATOR_PERIOD, wl = WINDOW_LEN) {
 let model
 let [xTrain, yTrain] = create_dataSet(data)
 let [xTest, yTest] = create_dataSet(test)
-xTrain = xTrain.map(v => tf.tensor3d(v, [1, 4, 3]))
-xTest = xTest.map(v => tf.tensor3d(v, [1, 4, 3]))
+xTrain = xTrain.map(v => tf.tensor3d(v, [1, 4, 4]))
+xTest = xTest.map(v => tf.tensor3d(v, [1, 4, 4]))
 //xTrain[0].print()
 //xTrain = tf.tensor(xTrain)
 //yTrain = tf.tensor(yTrain)
@@ -55,7 +56,10 @@ async function execute() {
   const optimizer = tf.train.adam(0.01)
   model = tf.sequential()
 
-  model.add(tf.layers.lstm({units: 12, returnSequences: true, inputShape: [4, 3]}))
+  model.add(tf.layers.lstm({units: 16, returnSequences: true, inputShape: [4, 4], recurrentActivation: 'elu'}))
+  model.add(tf.layers.dropout({rate: 0.2}))
+
+  model.add(tf.layers.lstm({units: 8, returnSequences: true, recurrentActivation: 'elu'}))
   model.add(tf.layers.dropout({rate: 0.2}))
 
   model.add(tf.layers.flatten())
@@ -70,18 +74,20 @@ async function execute() {
 
   for (var i = 0; i < xTrain.length; i++) {
     const h = await model.fit(xTrain[i], yTrain[i], {
-      batchSize: 16,
+      batchSize: 64,
       epochs: 3
     }).catch(e => console.error(e))
     i % 100 == 0 ? console.log(h.history.loss[0]) : null
   }
 
+  for (var i = 0; i < 300/*xTest.length*/; i++) {
+    const p = await model.predict(xTest[254])
+    p.print()
+  }
+
 }
 
 execute()
-for (var i = 0; i < xTest.length; i++) {
-  model.evaluate(xTest[i], yTest[i], {verbose: 0})
-}
 
 
 
